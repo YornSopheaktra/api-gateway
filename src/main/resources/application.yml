@@ -1,0 +1,56 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: dev
+  zipkin:
+    sender:
+      type: web
+  config:
+    import: optional:configserver:http://localhost:8888/config-server
+
+  cloud:
+    config:
+      label: latest
+    gateway:
+      default-filters:
+        - RemoveRequestHeader=client_secret
+        - RemoveRequestHeader=digest
+      httpclient:
+        wiretap: true
+        httpserver:
+          wiretap: true
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+  sleuth:
+    reactor:
+      instrumentation-type: DECORATE_ON_EACH
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh,gateway,env,beans
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      type: b3
+
+logging:
+  level:
+    org:
+      springframework:
+        cloud:
+          gateway: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} | %5p [${spring.application.name:}, %X{traceId:-}, %X{traceId:-}] | %logger{1.} | %msg%n"
