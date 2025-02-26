@@ -1,0 +1,44 @@
+    package com.spt.exption;
+
+import com.spt.exption.code.ErrorMessageCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.springframework.http.HttpStatus;
+
+@NoArgsConstructor
+@Getter
+@ToString
+@Setter
+public abstract class GatewayException extends RuntimeException {
+
+    private HttpStatus status;
+    private String code;
+    private String message;
+    private ErrorMessageCode errorMessageCode;
+
+
+    public GatewayException(String code, String message) {
+        this.message = message;
+        this.code = code;
+    }
+
+    public GatewayException(String code, String message, HttpStatus status){
+        this.message = message;
+        this.code = code;
+        this.status=status;
+    }
+    public GatewayException(ErrorMessageCode errorMessageCode) {
+        this.errorMessageCode = errorMessageCode;
+        this.message=errorMessageCode.getMessage();
+        this.code=errorMessageCode.getCode();
+    }
+
+    public GatewayException(ErrorMessageCode  errorMessageCode, HttpStatus status){
+        this.errorMessageCode = errorMessageCode;
+        this.status=status;
+        this.code=errorMessageCode.getCode();
+        this.message=errorMessageCode.getMessage();
+    }
+}
