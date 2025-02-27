@@ -1,7 +1,6 @@
 package com.spt.service.imp;
 
 import com.spt.config.ClientConfig;
-import com.spt.exption.GatewayException;
 import com.spt.exption.ServerException;
 import com.spt.model.entity.Client;
 import com.spt.service.ClientService;

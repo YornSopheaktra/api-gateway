@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api-gateway")
 public class AdminController {
 
-    @GetMapping("/")
+    @GetMapping
     public String welcome(){
         return "Welcome to API Gateway!";
     }
