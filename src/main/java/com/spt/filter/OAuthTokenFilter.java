@@ -2,9 +2,13 @@ package com.spt.filter;
 
 
 import com.spt.model.constant.FilterOrder;
-
+import com.spt.model.entity.Client;
+import com.spt.service.AuthenticateManager;
+import com.spt.service.RequestBodyRewrite;
+import com.spt.service.TokenValidator;
+import com.spt.utils.TokenUtils;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -15,55 +19,55 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.Optional;
+import static com.spt.utils.TokenUtils.USER_ID;
 
 
 @Component("oauth2_token")
 @Slf4j
 public class OAuthTokenFilter
-        //extends BaseGlobalFilter
+        extends BaseGlobalFilter
         implements GlobalFilter, Ordered {
 
-//    @Autowired
-//    private TokenUtils tokenUtils;
-//
-//    @Autowired
-//    private RequestBodyRewrite requestBodyRewrite;
-//
-//    @Autowired
-//    private ModifyRequestBodyGatewayFilterFactory modifyRequestBodyFilter;
-//
-//    @Autowired
-//    private ClientService clientService;
-//
-//    @Autowired
-//    private TokenValidator tokenValidator;
-//
-//    @Value("${ignoreResources:**/actuator/health}")
-//    private String ignoreResources;
-//
-//    OAuthTokenFilter(AuthenticateManager authenticateManager) {
-//        super(authenticateManager);
-//    }
+
+    private final TokenUtils tokenUtils;
+
+
+    private final RequestBodyRewrite requestBodyRewrite;
+
+    private final ModifyRequestBodyGatewayFilterFactory modifyRequestBodyFilter;
+
+
+    private final TokenValidator tokenValidator;
+
+    @Value("${ignoreResources:**/actuator/health}")
+    private String ignoreResources;
+
+    public OAuthTokenFilter(AuthenticateManager authenticateManager, TokenUtils tokenUtils, RequestBodyRewrite requestBodyRewrite, ModifyRequestBodyGatewayFilterFactory modifyRequestBodyFilter, TokenValidator tokenValidator) {
+        super(authenticateManager);
+        this.tokenUtils = tokenUtils;
+        this.requestBodyRewrite = requestBodyRewrite;
+        this.modifyRequestBodyFilter = modifyRequestBodyFilter;
+        this.tokenValidator = tokenValidator;
+    }
+
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.debug("OAuthTokenPolicy is filtering is started");
-        /*if (super.skipCheckUrl(exchange, chain))
+        if (super.skipCheckUrl(exchange, chain))
             return chain.filter(exchange);
         if (this.isAuthTokenEndpoint(exchange, chain)) {
             //validate client and secret if the endpoint is login/oauth-token/authorization
             var client = super.getClient(exchange);
-            super.validateClientSecret(client, HttpHeaderUtils.clientSecret(exchange.getRequest().getHeaders()));
+            super.validateClientDetails(client, exchange);
             return chain.filter(exchange);
         }
-        Client client = clientService
-                .findClientById(clientId(exchange.getRequest().getHeaders()));
-        Optional<ClientPolicy> policyOAuth =
+        Client client = super.getClient(exchange);
+/*        Optional<ClientPolicy> policyOAuth =
                 client.isPolicyExisted(PolicyConstants.OAUTH2_TOKEN_POLICY);
         if (policyOAuth.isEmpty()) {
             return chain.filter(exchange);
-        }
+        }*/
         Claims claims =
                 tokenUtils.getClaim(tokenUtils.getAuthorizationToken(exchange.getRequest()),
                         exchange.getRequest().getHeaders().getFirst("channel_type"));
@@ -72,7 +76,7 @@ public class OAuthTokenFilter
                 .validate();
         exchange.getRequest()
                 .mutate()
-                .header(CIF, TokenUtils.ClaimUtils.getCif(claims))
+                .header(USER_ID, TokenUtils.ClaimUtils.getCif(claims))
                 .build();
 
         MediaType contentType = exchange.getRequest()
@@ -82,13 +86,13 @@ public class OAuthTokenFilter
             return chain.filter(exchange);
         try {
             return modifyRequestBodyFilter.apply(
-                    new ModifyRequestBodyGatewayFilterFactory.Config()
-                            .setRewriteFunction(String.class,
-                                    String.class, requestBodyRewrite))
+                            new ModifyRequestBodyGatewayFilterFactory.Config()
+                                    .setRewriteFunction(String.class,
+                                            String.class, requestBodyRewrite))
                     .filter(exchange, chain);
         } catch (Exception exception) {
             log.warn("Exception occoured on body rewrite");
-        }*/
+        }
         return chain.filter(exchange);
 
     }

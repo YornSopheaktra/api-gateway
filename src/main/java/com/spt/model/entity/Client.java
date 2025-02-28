@@ -16,4 +16,6 @@ public class Client implements Serializable {
     String secret;
     String apiKey;
     String scopes;
+    String channel;
+    String channelType;
 }
